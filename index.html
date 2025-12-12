@@ -31,20 +31,16 @@
             letter-spacing: 0.1em;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
+        /* --- 核心修改：隐藏滚动条以解决双重滚动条问题 --- */
+        html, body {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
-        ::-webkit-scrollbar-track {
-            background: var(--soul-black); 
+
+        html::-webkit-scrollbar, body::-webkit-scrollbar {
+            display: none; /* Chrome, Safari and Opera */
         }
-        ::-webkit-scrollbar-thumb {
-            background: var(--soul-gold-dim); 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--soul-gold); 
-        }
+        /* ------------------------------------------- */
 
         /* Soul-like UI Boxes */
         .soul-box {
@@ -156,14 +152,12 @@
 </head>
 <body class="flex flex-col min-h-screen">
 
-    <!-- Background Embers -->
     <canvas id="ember-canvas"></canvas>
 
-    <!-- Top Navigation / Header -->
     <header class="w-full py-8 border-b border-[#333] bg-[#0a0a0a] bg-opacity-90 sticky top-0 z-50 backdrop-blur-sm">
         <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
             <div class="text-center md:text-left mb-4 md:mb-0">
-                <h1 class="text-3xl md:text-4xl text-gold font-bold tracking-widest text-shadow">Arcane Souls: Rebirth</h1>
+                <h1 class="text-3xl md:text-4xl text-gold font-bold tracking-widest text-shadow">Project: SEKIRO</h1>
                 <p class="text-sm text-gray-500 mt-1 cinzel-font tracking-wide">Combat System Implementation in UE5</p>
             </div>
             
@@ -176,12 +170,9 @@
         </div>
     </header>
 
-    <!-- Main Layout -->
     <main class="flex-grow max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
         
-        <!-- Left Sidebar (Stats/Profile) -->
         <aside class="lg:col-span-3 space-y-8">
-            <!-- Project Status Card -->
             <div class="soul-box p-6 rounded-sm">
                 <h3 class="text-xl text-gold mb-4 border-b border-[#333] pb-2 text-center">Equipment Status</h3>
                 
@@ -222,7 +213,6 @@
                 </div>
             </div>
 
-            <!-- Table of Contents -->
             <div class="hidden lg:block">
                 <h4 class="text-gray-500 mb-4 text-center text-sm">Bonfire Travel</h4>
                 <ul class="space-y-2 text-gray-400 text-sm pl-4 border-l border-[#333]">
@@ -236,10 +226,8 @@
             </div>
         </aside>
 
-        <!-- Main Feed -->
         <div class="lg:col-span-9 space-y-12">
 
-            <!-- Intro / Overview -->
             <article id="overview" class="soul-box p-8 md:p-10">
                 <div class="flex items-center justify-between mb-6">
                     <span class="text-gold-dim text-xs tracking-widest uppercase border border-[#8a703e] px-2 py-1">Entry 001</span>
@@ -269,10 +257,8 @@
                 </p>
             </article>
 
-            <!-- Divider -->
             <div class="divider-ornament"><span class="text-gold text-xl">✤</span></div>
 
-            <!-- Architecture -->
             <article id="architecture" class="space-y-6">
                 <h2 class="text-2xl text-gold border-l-4 border-gold pl-4">Core Architecture</h2>
                 <div class="bg-[#111] p-6 rounded border-l border-r border-[#333]">
@@ -313,7 +299,6 @@
                 </div>
             </article>
 
-            <!-- Mechanics -->
             <article id="mechanics" class="soul-box p-8 md:p-10">
                 <h2 class="text-2xl text-gold mb-6 text-center">Key Mechanics Implementation</h2>
                 
@@ -356,7 +341,6 @@
                 </div>
             </article>
 
-            <!-- Debug Log -->
             <article id="debug" class="bg-[#0f0f0f] border border-[#222] p-6 rounded relative overflow-hidden">
                 <div class="absolute top-0 right-0 p-2 opacity-10 text-6xl text-gray-500 font-serif">?</div>
                 <h2 class="text-xl text-red-800 font-bold mb-4 cinzel-font">Dungeon Log: Recent Fixes</h2>
@@ -380,7 +364,6 @@
                 </div>
             </article>
 
-            <!-- Footer -->
             <footer class="text-center py-12 border-t border-[#222]">
                 <p class="cinzel-font text-gold text-2xl mb-2">BONFIRE LIT</p>
             </footer>
