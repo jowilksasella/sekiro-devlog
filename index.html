@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sekiro Combat System | DevLog</title>
+    <title>Arcane Souls: Rebirth | DevLog</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <!-- Updated Lucide CDN to a more reliable source -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
             --soul-black: #080808;
@@ -15,14 +17,26 @@
             --soul-gold-dim: #8a703e;
             --soul-white: #e0e0e0;
             --soul-red: #5e0b0b;
+            --soul-blue: #1e3a8a; /* Added for Arcane feel */
             --ui-border: 1px solid var(--soul-gold-dim);
+        }
+
+        /* Wix/Iframe Compatibility Fix: Prevents double scrollbars */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            overflow-x: hidden; /* Force hide horizontal scrollbar */
+            /* Ensure smooth scrolling and prevent scrollbar conflicts */
+            scrollbar-width: thin; 
+            scrollbar-color: var(--soul-gold-dim) var(--soul-black);
         }
 
         body {
             background-color: var(--soul-black);
             color: var(--soul-white);
             font-family: 'Cormorant Garamond', serif;
-            overflow-x: hidden;
+            position: relative; /* Fixes stacking context issues in embeds */
         }
 
         h1, h2, h3, h4, .cinzel-font {
@@ -31,16 +45,20 @@
             letter-spacing: 0.1em;
         }
 
-        /* --- 核心修改：隐藏滚动条以解决双重滚动条问题 --- */
-        html, body {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+        /* Custom Scrollbar - Webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-
-        html::-webkit-scrollbar, body::-webkit-scrollbar {
-            display: none; /* Chrome, Safari and Opera */
+        ::-webkit-scrollbar-track {
+            background: var(--soul-black); 
         }
-        /* ------------------------------------------- */
+        ::-webkit-scrollbar-thumb {
+            background: var(--soul-gold-dim); 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--soul-gold); 
+        }
 
         /* Soul-like UI Boxes */
         .soul-box {
@@ -148,20 +166,50 @@
             font-size: 0.9em;
             color: #bbb;
         }
+
+        /* Download Button */
+        .download-btn {
+            background: linear-gradient(to bottom, #2a2a2a, #111);
+            border: 1px solid var(--soul-gold-dim);
+            color: var(--soul-gold);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .download-btn:hover {
+            background: var(--soul-gold-dim);
+            color: #000;
+            box-shadow: 0 0 15px rgba(197, 160, 89, 0.4);
+        }
+        .download-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+        .download-btn:hover::before {
+            left: 100%;
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
 
+    <!-- Background Embers -->
     <canvas id="ember-canvas"></canvas>
 
-    <header class="w-full py-8 border-b border-[#333] bg-[#0a0a0a] bg-opacity-90 sticky top-0 z-50 backdrop-blur-sm">
-        <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
-            <div class="text-center md:text-left mb-4 md:mb-0">
-                <h1 class="text-3xl md:text-4xl text-gold font-bold tracking-widest text-shadow">Project: SEKIRO</h1>
-                <p class="text-sm text-gray-500 mt-1 cinzel-font tracking-wide">Combat System Implementation in UE5</p>
+    <!-- Top Navigation / Header -->
+    <header class="w-full py-8 border-b border-[#333] bg-[#0a0a0a] bg-opacity-95 sticky top-0 z-50 backdrop-blur-sm shadow-2xl">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-center md:text-left">
+                <h1 class="text-2xl md:text-4xl text-gold font-bold tracking-widest text-shadow-lg mb-1">Arcane Souls: Rebirth</h1>
+                <p class="text-xs md:text-sm text-gray-500 cinzel-font tracking-[0.2em] uppercase">Development Chronicle</p>
             </div>
             
-            <nav class="flex gap-8 text-lg text-gray-400 cinzel-font">
+            <nav class="flex flex-wrap justify-center gap-6 md:gap-8 text-base md:text-lg text-gray-400 cinzel-font">
                 <a href="#overview" class="nav-link">Overview</a>
                 <a href="#architecture" class="nav-link">Architecture</a>
                 <a href="#mechanics" class="nav-link">Mechanics</a>
@@ -170,42 +218,55 @@
         </div>
     </header>
 
-    <main class="flex-grow max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+    <!-- Main Layout -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 md:px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         
-        <aside class="lg:col-span-3 space-y-8">
-            <div class="soul-box p-6 rounded-sm">
-                <h3 class="text-xl text-gold mb-4 border-b border-[#333] pb-2 text-center">Equipment Status</h3>
+        <!-- Left Sidebar (Stats/Profile) -->
+        <aside class="lg:col-span-3 space-y-8 order-2 lg:order-1">
+            
+            <!-- Download Artifact Card -->
+            <div class="soul-box p-6 rounded-sm text-center transform hover:scale-[1.02] transition-transform duration-300">
+                <div class="text-gold text-4xl mb-4 flex justify-center opacity-80">
+                    <i data-lucide="scroll"></i>
+                </div>
+                <h3 class="text-lg text-gold mb-2 cinzel-font">Abyssal Archives</h3>
+                <p class="text-xs text-gray-400 mb-6 italic font-serif">"Contains the compiled essence of the world. Handle with care."</p>
                 
-                <div class="space-y-4 text-sm">
+                <a href="https://drive.google.com/file/d/1HDBGE6G1GrrClAxkDfdCUJQrFfBmJOKP/view?usp=sharing" target="_blank" class="download-btn w-full py-3 px-4 flex items-center justify-center gap-2 cinzel-font text-sm font-bold group">
+                    <i data-lucide="download" class="w-4 h-4 group-hover:animate-bounce"></i>
+                    <span>Acquire Build (.zip)</span>
+                </a>
+                <p class="text-[10px] text-gray-600 mt-2 text-center uppercase tracking-widest">Ver. Alpha-0.5</p>
+            </div>
+
+            <!-- Project Status Card -->
+            <div class="soul-box p-6 rounded-sm">
+                <h3 class="text-lg text-gold mb-4 border-b border-[#333] pb-2 text-center cinzel-font">System Status</h3>
+                
+                <div class="space-y-4 text-sm font-sans tracking-wide">
                     <div>
-                        <div class="flex justify-between text-gray-400 mb-1">
-                            <span>Engine Ver.</span>
-                            <span class="text-white">Unreal Engine 5.5</span>
-                        </div>
+                        <div class="flex justify-between text-gray-500 mb-1 text-xs uppercase">Engine Ver.</div>
+                        <div class="text-gray-300">Unreal Engine 5.5</div>
                     </div>
                     <div>
-                        <div class="flex justify-between text-gray-400 mb-1">
-                            <span>Language</span>
-                            <span class="text-white">C++ & Blueprints</span>
-                        </div>
+                        <div class="flex justify-between text-gray-500 mb-1 text-xs uppercase">Core Lang</div>
+                        <div class="text-gray-300">C++ / Blueprint</div>
                     </div>
                     <div>
-                        <div class="flex justify-between text-gray-400 mb-1">
-                            <span>Project Type</span>
-                            <span class="text-white">Final Year Project</span>
-                        </div>
+                        <div class="flex justify-between text-gray-500 mb-1 text-xs uppercase">Project Type</div>
+                        <div class="text-gray-300">Final Year Project</div>
                     </div>
                 </div>
 
-                <div class="mt-6 space-y-3">
+                <div class="mt-8 space-y-4">
                     <div>
-                        <div class="flex justify-between text-xs text-gold-dim mb-1">HP (System Stability)</div>
+                        <div class="flex justify-between text-xs text-gold-dim mb-1 tracking-widest">SYSTEM STABILITY (HP)</div>
                         <div class="stat-bar-container">
                             <div class="stat-bar-fill" style="width: 90%"></div>
                         </div>
                     </div>
                     <div>
-                        <div class="flex justify-between text-xs text-gold-dim mb-1">POSTURE (Code Cleanliness)</div>
+                        <div class="flex justify-between text-xs text-gold-dim mb-1 tracking-widest">CODE PURITY (POSTURE)</div>
                         <div class="stat-bar-container">
                             <div class="stat-bar-fill posture-bar-fill" style="width: 75%"></div>
                         </div>
@@ -213,165 +274,236 @@
                 </div>
             </div>
 
-            <div class="hidden lg:block">
-                <h4 class="text-gray-500 mb-4 text-center text-sm">Bonfire Travel</h4>
-                <ul class="space-y-2 text-gray-400 text-sm pl-4 border-l border-[#333]">
-                    <li><a href="#overview" class="hover:text-gold transition-colors block py-1">1. Project Overview</a></li>
-                    <li><a href="#architecture" class="hover:text-gold transition-colors block py-1">2. Core Architecture</a></li>
-                    <li><a href="#mechanics" class="hover:text-gold transition-colors block py-1">3. Key Mechanics</a></li>
-                    <li><a href="#animation" class="hover:text-gold transition-colors block py-1">4. Animation System</a></li>
-                    <li><a href="#ai" class="hover:text-gold transition-colors block py-1">5. AI System</a></li>
-                    <li><a href="#debug" class="hover:text-gold transition-colors block py-1">6. Debugging Log</a></li>
+            <!-- Table of Contents -->
+            <div class="hidden lg:block pl-2">
+                <h4 class="text-gray-600 mb-4 text-xs tracking-[0.2em] uppercase">Bonfire Travel</h4>
+                <ul class="space-y-3 text-gray-500 text-sm pl-4 border-l border-[#222]">
+                    <li><a href="#overview" class="hover:text-gold transition-colors block py-1 flex items-center gap-2"><span class="w-1 h-1 bg-gray-600 rounded-full"></span> Project Overview</a></li>
+                    <li><a href="#architecture" class="hover:text-gold transition-colors block py-1 flex items-center gap-2"><span class="w-1 h-1 bg-gray-600 rounded-full"></span> Core Architecture</a></li>
+                    <li><a href="#mechanics" class="hover:text-gold transition-colors block py-1 flex items-center gap-2"><span class="w-1 h-1 bg-gray-600 rounded-full"></span> Key Mechanics</a></li>
+                    <li><a href="#animation" class="hover:text-gold transition-colors block py-1 flex items-center gap-2"><span class="w-1 h-1 bg-gray-600 rounded-full"></span> Animation System</a></li>
+                    <li><a href="#ai" class="hover:text-gold transition-colors block py-1 flex items-center gap-2"><span class="w-1 h-1 bg-gray-600 rounded-full"></span> AI Logic</a></li>
+                    <li><a href="#debug" class="hover:text-gold transition-colors block py-1 flex items-center gap-2"><span class="w-1 h-1 bg-gray-600 rounded-full"></span> Debug Log</a></li>
                 </ul>
             </div>
         </aside>
 
-        <div class="lg:col-span-9 space-y-12">
+        <!-- Main Feed -->
+        <div class="lg:col-span-9 space-y-12 order-1 lg:order-2">
 
-            <article id="overview" class="soul-box p-8 md:p-10">
-                <div class="flex items-center justify-between mb-6">
-                    <span class="text-gold-dim text-xs tracking-widest uppercase border border-[#8a703e] px-2 py-1">Entry 001</span>
-                    <span class="text-gray-500 text-sm italic">2025-12-12</span>
+            <!-- Intro / Overview -->
+            <article id="overview" class="soul-box p-8 md:p-12">
+                <div class="flex items-center justify-between mb-8 border-b border-[#222] pb-4">
+                    <span class="text-gold-dim text-xs tracking-[0.2em] uppercase border border-[#8a703e] px-3 py-1">Entry 001</span>
+                    <span class="text-gray-600 text-sm italic font-serif">December 12th, 2025</span>
                 </div>
                 
-                <h2 class="text-3xl text-gold mb-6">Project Overview</h2>
-                <p class="text-lg text-gray-300 leading-relaxed mb-4">
-                    This project implements a <strong class="text-gold">"Sekiro-like"</strong> combat system in Unreal Engine 5. Unlike traditional health-based combat, our core mechanics focus on the delicate dance of swords.
+                <h2 class="text-3xl md:text-4xl text-gold mb-6 cinzel-font">Project Overview</h2>
+                <p class="text-xl text-gray-300 leading-relaxed mb-6 font-light">
+                    This project, <strong class="text-gold">Arcane Souls: Rebirth</strong>, implements a Sekiro-inspired combat system within Unreal Engine 5. We abandon traditional health-based attrition for the delicate dance of swords.
                 </p>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-8">
-                    <div class="bg-[#111] p-4 border border-[#333] text-center hover:border-[#555] transition-colors">
-                        <div class="text-gold text-2xl mb-2">Posture</div>
-                        <div class="text-xs text-gray-500 cinzel-font">架勢</div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-10">
+                    <div class="bg-[#111] p-6 border border-[#222] text-center hover:border-gold transition-colors group cursor-default">
+                        <div class="text-gold text-2xl mb-2 cinzel-font group-hover:text-white transition-colors">Posture</div>
+                        <div class="text-xs text-gray-500 cinzel-font tracking-widest uppercase">架勢</div>
+                        <div class="h-px w-8 bg-gold mx-auto mt-3 opacity-30"></div>
                     </div>
-                    <div class="bg-[#111] p-4 border border-[#333] text-center hover:border-[#555] transition-colors">
-                        <div class="text-gold text-2xl mb-2">Deflection</div>
-                        <div class="text-xs text-gray-500 cinzel-font">彈反</div>
+                    <div class="bg-[#111] p-6 border border-[#222] text-center hover:border-gold transition-colors group cursor-default">
+                        <div class="text-gold text-2xl mb-2 cinzel-font group-hover:text-white transition-colors">Deflection</div>
+                        <div class="text-xs text-gray-500 cinzel-font tracking-widest uppercase">彈反</div>
+                        <div class="h-px w-8 bg-gold mx-auto mt-3 opacity-30"></div>
                     </div>
-                    <div class="bg-[#111] p-4 border border-[#333] text-center hover:border-[#555] transition-colors">
-                        <div class="text-gold text-2xl mb-2">Deathblow</div>
-                        <div class="text-xs text-gray-500 cinzel-font">處決</div>
+                    <div class="bg-[#111] p-6 border border-[#222] text-center hover:border-gold transition-colors group cursor-default">
+                        <div class="text-gold text-2xl mb-2 cinzel-font group-hover:text-white transition-colors">Deathblow</div>
+                        <div class="text-xs text-gray-500 cinzel-font tracking-widest uppercase">處決</div>
+                        <div class="h-px w-8 bg-gold mx-auto mt-3 opacity-30"></div>
                     </div>
                 </div>
-                <p class="text-gray-400">
-                    The system is designed to support both player-controlled characters and AI enemies with shared logic, ensuring a fair yet challenging battlefield.
+                <p class="text-gray-400 font-serif italic text-center text-lg opacity-80">
+                    "Hesitation is defeat."
                 </p>
             </article>
 
-            <div class="divider-ornament"><span class="text-gold text-xl">✤</span></div>
+            <!-- Divider -->
+            <div class="divider-ornament"><span class="text-gold text-2xl transform rotate-45">❖</span></div>
 
+            <!-- Architecture -->
             <article id="architecture" class="space-y-6">
-                <h2 class="text-2xl text-gold border-l-4 border-gold pl-4">Core Architecture</h2>
-                <div class="bg-[#111] p-6 rounded border-l border-r border-[#333]">
-                    <h3 class="text-xl text-gray-200 mb-3 cinzel-font">2.1 Characters</h3>
-                    <ul class="list-disc list-inside space-y-2 text-gray-400 ml-2">
-                        <li><strong class="text-gray-300">ASekiroCharacter</strong>: The base class for all entities.</li>
-                        <li>Inheritance: <code class="text-xs bg-[#222] px-1 py-0.5">ACharacter</code> -> <code class="text-xs bg-[#222] px-1 py-0.5">ASekiroCharacter</code></li>
-                        <li>Responsibilities: Input, Movement, Animation Playback.</li>
+                <h2 class="text-2xl text-gold border-l-4 border-gold pl-6 cinzel-font">Core Architecture</h2>
+                
+                <!-- Character Card -->
+                <div class="bg-[#111] p-8 rounded-sm border-l border-r border-[#222] relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 text-[#1a1a1a] text-9xl cinzel-font opacity-20 pointer-events-none">A</div>
+                    <h3 class="text-xl text-gray-200 mb-4 cinzel-font flex items-center gap-3">
+                        <i data-lucide="user" class="text-gold w-5 h-5"></i>
+                        2.1 Character Entity
+                    </h3>
+                    <ul class="space-y-3 text-gray-400 ml-2 font-light">
+                        <li class="flex items-start gap-2">
+                            <span class="text-gold mt-1">›</span>
+                            <span><strong class="text-gray-300">ASekiroCharacter</strong>: The progenitor class for both Player and AI entities.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-gold mt-1">›</span>
+                            <span>Inheritance Chain: <code class="text-xs bg-[#222] px-2 py-1 text-gold-dim border border-[#333]">ACharacter</code> → <code class="text-xs bg-[#222] px-2 py-1 text-gold-dim border border-[#333]">ASekiroCharacter</code></span>
+                        </li>
                     </ul>
                 </div>
                 
-                <div class="bg-[#111] p-6 rounded border-l border-r border-[#333]">
-                    <h3 class="text-xl text-gray-200 mb-3 cinzel-font">2.2 Component System</h3>
-                    <p class="text-gray-400 mb-4">The soul of the system is modular. Capabilities are granted via components:</p>
+                <!-- Components Grid -->
+                <div class="bg-[#111] p-8 rounded-sm border-l border-r border-[#222]">
+                    <h3 class="text-xl text-gray-200 mb-6 cinzel-font flex items-center gap-3">
+                        <i data-lucide="box" class="text-gold w-5 h-5"></i>
+                        2.2 Component System
+                    </h3>
+                    <p class="text-gray-400 mb-6 text-sm italic">"The soul is modular. Abilities are but fragments attached to the vessel."</p>
                     <div class="space-y-4">
-                        <div class="flex gap-4">
-                            <div class="w-12 h-12 flex-shrink-0 bg-[#222] flex items-center justify-center border border-[#444] text-gold text-xl">P</div>
+                        <div class="flex gap-4 p-4 hover:bg-[#161616] transition-colors border border-transparent hover:border-[#333]">
+                            <div class="w-10 h-10 flex-shrink-0 bg-[#0a0a0a] flex items-center justify-center border border-[#333] text-gold cinzel-font font-bold">P</div>
                             <div>
-                                <h4 class="text-gold-dim font-bold">USekiroPostureComponent</h4>
-                                <p class="text-sm text-gray-500">Manages the Posture bar and "Broken" states.</p>
+                                <h4 class="text-gold-dim font-bold cinzel-font text-sm">USekiroPostureComponent</h4>
+                                <p class="text-sm text-gray-500 mt-1">Manages the Posture bar and determines "Broken" states.</p>
                             </div>
                         </div>
-                        <div class="flex gap-4">
-                            <div class="w-12 h-12 flex-shrink-0 bg-[#222] flex items-center justify-center border border-[#444] text-gold text-xl">D</div>
+                        <div class="flex gap-4 p-4 hover:bg-[#161616] transition-colors border border-transparent hover:border-[#333]">
+                            <div class="w-10 h-10 flex-shrink-0 bg-[#0a0a0a] flex items-center justify-center border border-[#333] text-gold cinzel-font font-bold">D</div>
                             <div>
-                                <h4 class="text-gold-dim font-bold">USekiroDeflectComponent</h4>
-                                <p class="text-sm text-gray-500">The shield against death. Calculates Parry vs. Block timing windows.</p>
+                                <h4 class="text-gold-dim font-bold cinzel-font text-sm">USekiroDeflectComponent</h4>
+                                <p class="text-sm text-gray-500 mt-1">The shield against death. Calculates perfect parry vs. block timing windows.</p>
                             </div>
                         </div>
-                        <div class="flex gap-4">
-                            <div class="w-12 h-12 flex-shrink-0 bg-[#222] flex items-center justify-center border border-[#444] text-gold text-xl">C</div>
+                        <div class="flex gap-4 p-4 hover:bg-[#161616] transition-colors border border-transparent hover:border-[#333]">
+                            <div class="w-10 h-10 flex-shrink-0 bg-[#0a0a0a] flex items-center justify-center border border-[#333] text-gold cinzel-font font-bold">C</div>
                             <div>
-                                <h4 class="text-gold-dim font-bold">USekiroCombatComponent</h4>
-                                <p class="text-sm text-gray-500">Offensive capabilities. Hit detection (Line Trace) and Execution requests.</p>
+                                <h4 class="text-gold-dim font-bold cinzel-font text-sm">USekiroCombatComponent</h4>
+                                <p class="text-sm text-gray-500 mt-1">Offensive capabilities. Handles hit detection (Line Trace) and execution requests.</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </article>
 
-            <article id="mechanics" class="soul-box p-8 md:p-10">
-                <h2 class="text-2xl text-gold mb-6 text-center">Key Mechanics Implementation</h2>
+            <!-- Mechanics -->
+            <article id="mechanics" class="soul-box p-8 md:p-12">
+                <h2 class="text-2xl text-gold mb-8 text-center cinzel-font tracking-widest">Combat Mechanics</h2>
                 
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div>
-                        <h3 class="text-lg text-white mb-2 cinzel-font border-b border-[#333] pb-2">3.1 Posture & Stun</h3>
+                <div class="grid md:grid-cols-2 gap-12">
+                    <div class="relative">
+                        <h3 class="text-lg text-white mb-4 cinzel-font border-b border-[#333] pb-2">3.1 Posture & Stun</h3>
                         <p class="text-gray-400 text-sm leading-relaxed mb-4">
-                            Attacks deal "Posture Damage". When Posture reaches max, the character enters a "Stunned" state. 
-                            <br><br>
-                            <em class="text-gray-500">Implementation:</em> `SekiroPostureComponent` tracks the value. When broken, it broadcasts `OnPostureBroken`.
+                            Attacks deal <span class="text-gold-dim">Posture Damage</span>. When Posture reaches max, the character enters a "Stunned" state, leaving them open to a fatal blow.
                         </p>
+                        <div class="bg-[#151515] p-3 text-xs text-gray-500 border-l-2 border-gold font-mono">
+                            Event: OnPostureBroken<br>
+                            Action: Play StunMontage
+                        </div>
                     </div>
                     <div>
-                        <h3 class="text-lg text-white mb-2 cinzel-font border-b border-[#333] pb-2">3.2 The Deflection Window</h3>
-                        <p class="text-gray-400 text-sm leading-relaxed">
-                            Precision is key. The `SekiroDeflectComponent` measures the time since `StartBlocking` was triggered.
+                        <h3 class="text-lg text-white mb-4 cinzel-font border-b border-[#333] pb-2">3.2 The Deflection Window</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed mb-4">
+                            Precision is key. The <code class="text-gray-300">SekiroDeflectComponent</code> measures timing:
                         </p>
-                        <ul class="mt-4 space-y-2 text-sm">
+                        <ul class="space-y-3 text-sm">
                             <li class="flex items-center gap-3">
-                                <span class="w-2 h-2 bg-gold rounded-full"></span>
-                                <span class="text-gold">< 0.2s: Perfect Parry</span> (Sparks, High Posture Dmg)
+                                <span class="w-2 h-2 bg-gold shadow-[0_0_8px_#c5a059] rounded-full"></span>
+                                <span class="text-gold font-bold">< 0.2s: Perfect Parry</span>
+                                <span class="text-xs text-gray-500 block ml-auto">Sparks</span>
                             </li>
                             <li class="flex items-center gap-3">
                                 <span class="w-2 h-2 bg-gray-600 rounded-full"></span>
-                                <span class="text-gray-400">> 0.2s: Block</span> (Safe, but accumulate posture)
+                                <span class="text-gray-400">> 0.2s: Guard</span>
+                                <span class="text-xs text-gray-500 block ml-auto">Safe</span>
                             </li>
                             <li class="flex items-center gap-3">
                                 <span class="w-2 h-2 bg-red-900 rounded-full"></span>
-                                <span class="text-red-400">Not Blocking: Hit</span> (Health Damage)
+                                <span class="text-red-400">None: Direct Hit</span>
+                                <span class="text-xs text-gray-500 block ml-auto">Damage</span>
                             </li>
                         </ul>
                     </div>
                 </div>
 
-                <div class="mt-8 pt-6 border-t border-[#222]">
-                    <h3 class="text-lg text-white mb-2 cinzel-font">3.3 Deathblow (處決)</h3>
-                    <p class="text-gray-400 text-sm">
-                        When an enemy is Stunned, the player can perform a "Deathblow". The <code class="text-gold-dim">SekiroCombatComponent</code> detects the Stunned state and triggers the fatal <code class="text-gray-300">ExecutionMontage</code> on the attacker and <code class="text-gray-300">DeathMontage</code> on the victim.
+                <div class="mt-10 pt-8 border-t border-[#222]">
+                    <h3 class="text-lg text-white mb-3 cinzel-font text-center">3.3 Deathblow (處決)</h3>
+                    <p class="text-gray-400 text-sm text-center max-w-2xl mx-auto">
+                        When an enemy is Stunned, the player can perform a "Deathblow". The combat component triggers the <span class="text-red-800 font-bold">ExecutionMontage</span> on the attacker and <span class="text-gray-500">DeathMontage</span> on the victim.
                     </p>
                 </div>
             </article>
 
-            <article id="debug" class="bg-[#0f0f0f] border border-[#222] p-6 rounded relative overflow-hidden">
-                <div class="absolute top-0 right-0 p-2 opacity-10 text-6xl text-gray-500 font-serif">?</div>
-                <h2 class="text-xl text-red-800 font-bold mb-4 cinzel-font">Dungeon Log: Recent Fixes</h2>
+            <!-- Debug Log -->
+            <article id="debug" class="bg-[#0f0f0f] border border-[#222] p-8 rounded relative overflow-hidden group hover:border-red-900/30 transition-colors">
+                <div class="absolute top-0 right-0 p-4 opacity-10 text-8xl text-red-900 cinzel-font pointer-events-none">FIX</div>
+                <h2 class="text-xl text-red-800 font-bold mb-6 cinzel-font flex items-center gap-2">
+                    <i data-lucide="bug" class="w-5 h-5"></i>
+                    Dungeon Log: Recent Fixes
+                </h2>
                 
-                <div class="space-y-6">
-                    <div class="border-l-2 border-red-900 pl-4">
-                        <h4 class="text-gray-200 font-bold">6.1 Block Loop Fix</h4>
-                        <p class="text-sm text-gray-500 mt-1">
-                            <span class="text-red-400">Issue:</span> Holding block button did not loop the block animation.<br>
-                            <span class="text-green-600">Fix:</span> Connected `Cast To SekiroCharacter` -> `Get bIsBlocking` -> `Set IsBlocking` in the ABP Event Graph.
-                        </p>
+                <div class="space-y-8">
+                    <div class="pl-6 border-l border-red-900/50 relative">
+                        <span class="absolute -left-[5px] top-0 w-2 h-2 bg-red-900 rounded-full"></span>
+                        <h4 class="text-gray-200 font-bold text-sm tracking-wide mb-2">6.1 Block Loop Animation</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div class="bg-[#1a1a1a] p-3 text-red-400/80">
+                                <strong class="block text-xs uppercase opacity-50 mb-1">Issue</strong>
+                                Holding block button did not loop the block animation properly.
+                            </div>
+                            <div class="bg-[#1a1a1a] p-3 text-green-600/80">
+                                <strong class="block text-xs uppercase opacity-50 mb-1">Solution</strong>
+                                Synced C++ <code class="text-gray-400">bIsBlocking</code> with ABP via Cast node in Event Graph.
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="border-l-2 border-red-900 pl-4">
-                        <h4 class="text-gray-200 font-bold">6.2 Enemy Attack Animation Fix</h4>
-                        <p class="text-sm text-gray-500 mt-1">
-                            <span class="text-red-400">Issue:</span> Enemies dealt damage but didn't play attack animations (Ghost attacks).<br>
-                            <span class="text-green-600">Fix:</span> Made `ASekiroCharacter::Attack()` public. AI now invokes the full physical form, not just the logic.
-                        </p>
+                    <div class="pl-6 border-l border-red-900/50 relative">
+                        <span class="absolute -left-[5px] top-0 w-2 h-2 bg-red-900 rounded-full"></span>
+                        <h4 class="text-gray-200 font-bold text-sm tracking-wide mb-2">6.2 Ghost Attacks</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div class="bg-[#1a1a1a] p-3 text-red-400/80">
+                                <strong class="block text-xs uppercase opacity-50 mb-1">Issue</strong>
+                                Enemies dealt damage but played no animation logic.
+                            </div>
+                            <div class="bg-[#1a1a1a] p-3 text-green-600/80">
+                                <strong class="block text-xs uppercase opacity-50 mb-1">Solution</strong>
+                                Exposed <code class="text-gray-400">ASekiroCharacter::Attack()</code> to public. AI now invokes full body animation.
+                            </div>
+                        </div>
                     </div>
                 </div>
             </article>
 
-            <footer class="text-center py-12 border-t border-[#222]">
-                <p class="cinzel-font text-gold text-2xl mb-2">BONFIRE LIT</p>
+            <!-- Footer -->
+            <footer class="text-center py-16 border-t border-[#222]">
+                <div class="text-gold text-3xl mb-4 cinzel-font animate-pulse duration-[3000ms]">BONFIRE LIT</div>
+                <p class="text-gray-700 text-xs uppercase tracking-[0.3em]">Arcane Souls: Rebirth &copy; 2025</p>
+                <div class="mt-8 flex justify-center gap-4 text-gray-700">
+                    <i data-lucide="sword" class="w-4 h-4"></i>
+                    <i data-lucide="shield" class="w-4 h-4"></i>
+                </div>
             </footer>
 
         </div>
     </main>
 
     <script>
+        // Initialize Icons with check
+        function initIcons() {
+            if (window.lucide) {
+                lucide.createIcons();
+            } else {
+                // If not loaded yet, retry shortly or wait for load event (though load event should have fired)
+                setTimeout(initIcons, 100);
+            }
+        }
+        
+        // Try to init
+        if (document.readyState === 'loading') {  
+            document.addEventListener('DOMContentLoaded', initIcons);
+        } else {  
+            initIcons();
+        }
+
+
         // Ember Particle Effect
         const canvas = document.getElementById('ember-canvas');
         const ctx = canvas.getContext('2d');
@@ -392,12 +524,12 @@
             reset() {
                 this.x = Math.random() * width;
                 this.y = height + Math.random() * 100;
-                this.speed = Math.random() * 1 + 0.5;
+                this.speed = Math.random() * 0.8 + 0.2;
                 this.size = Math.random() * 2 + 0.5;
                 this.opacity = Math.random() * 0.5 + 0.1;
                 this.fade = Math.random() * 0.005 + 0.002;
                 this.wobble = Math.random() * 2; 
-                this.wobbleSpeed = Math.random() * 0.05;
+                this.wobbleSpeed = Math.random() * 0.03;
             }
 
             update() {
@@ -412,7 +544,8 @@
             }
 
             draw() {
-                ctx.fillStyle = `rgba(255, 150, 50, ${this.opacity})`;
+                // Gold/Reddish tint for embers
+                ctx.fillStyle = `rgba(197, 160, 89, ${this.opacity})`;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -421,7 +554,7 @@
 
         function initParticles() {
             particles = [];
-            for (let i = 0; i < 70; i++) { // Number of particles
+            for (let i = 0; i < 60; i++) { 
                 particles.push(new Particle());
             }
         }
@@ -450,7 +583,7 @@
             });
         });
 
-        // Simple Fade In on Scroll Observer
+        // Content Fade In Animation
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -460,11 +593,11 @@
             });
         }, { threshold: 0.1 });
 
-        document.querySelectorAll('article').forEach(article => {
-            article.style.opacity = '0';
-            article.style.transform = 'translateY(20px)';
-            article.style.transition = 'all 0.8s ease-out';
-            observer.observe(article);
+        document.querySelectorAll('article, .soul-box').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'all 0.8s ease-out';
+            observer.observe(el);
         });
     </script>
 </body>
